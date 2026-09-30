@@ -32,7 +32,7 @@ export class LoanService {
     onData: (loans: Loan[]) => void,
     onError?: (error: Error) => void
   ): Unsubscribe {
-    if (!userId) {
+    if (!userId || !db) {
       onData([]);
       return () => {};
     }

@@ -35,7 +35,7 @@ export class TransactionService {
     onData: (transactions: Transaction[]) => void,
     onError?: (error: Error) => void
   ): Unsubscribe {
-    if (!userId) {
+    if (!userId || !db) {
       onData([]);
       return () => {};
     }
@@ -233,7 +233,7 @@ export class TransactionService {
     onData: (archives: MonthArchive[]) => void,
     onError?: (error: Error) => void
   ): Unsubscribe {
-    if (!userId) {
+    if (!userId || !db) {
       onData([]);
       return () => {};
     }

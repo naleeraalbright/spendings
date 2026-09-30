@@ -19,31 +19,39 @@ const firebaseConfig = {
 };
 
 export const isFirebaseConfigured = Boolean(
-  import.meta.env.VITE_FIREBASE_API_KEY && import.meta.env.VITE_FIREBASE_PROJECT_ID
+  import.meta.env.VITE_FIREBASE_API_KEY && 
+  import.meta.env.VITE_FIREBASE_PROJECT_ID &&
+  import.meta.env.VITE_FIREBASE_API_KEY !== 'undefined' &&
+  import.meta.env.VITE_FIREBASE_PROJECT_ID !== 'undefined'
 );
 
-let app: FirebaseApp;
-let auth: Auth;
-let db: Firestore;
+let app: FirebaseApp | undefined;
+let auth: Auth | undefined;
+let db: Firestore | undefined;
 
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
+if (isFirebaseConfigured) {
   try {
-    // Enable Multi-Tab Offline IndexedDB persistence for Cloud Firestore
-    db = initializeFirestore(app, {
-      localCache: persistentLocalCache({
-        tabManager: persistentMultipleTabManager()
-      })
-    });
-  } catch {
-    db = getFirestore(app);
+    if (!getApps().length) {
+      app = initializeApp(firebaseConfig);
+      try {
+        // Enable Multi-Tab Offline IndexedDB persistence for Cloud Firestore
+        db = initializeFirestore(app, {
+          localCache: persistentLocalCache({
+            tabManager: persistentMultipleTabManager()
+          })
+        });
+      } catch {
+        db = getFirestore(app);
+      }
+    } else {
+      app = getApp();
+      db = getFirestore(app);
+    }
+    auth = getAuth(app as FirebaseApp);
+  } catch (e) {
+    console.error('Failed to initialize Firebase:', e);
   }
-} else {
-  app = getApp();
-  db = getFirestore(app);
 }
-
-auth = getAuth(app);
 
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });

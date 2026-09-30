@@ -22,7 +22,7 @@ import { SettingsModal } from './components/settings/SettingsModal';
 import { AddLoanModal } from './components/loans/AddLoanModal';
 
 export const AppContent: React.FC = () => {
-  const { currentUser, userSettings } = useAuth();
+  const { currentUser, userSettings, isFirebaseConfigured } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loans, setLoans] = useState<Loan[]>([]);
@@ -168,6 +168,12 @@ export const AppContent: React.FC = () => {
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
+        {!isFirebaseConfigured && (
+          <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm text-center">
+            <strong>⚠️ Firebase Environment Variables Missing:</strong> Add your <code>VITE_FIREBASE_*</code> environment variables in Vercel Project Settings for user sign-in and data storage to work.
+          </div>
+        )}
+
         {/* If user is not logged in */}
         {!currentUser ? (
           <div className="py-16 text-center max-w-2xl mx-auto space-y-6">
