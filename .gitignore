@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Production build
+dist/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Mobile folder (excluded from this repository)
+mobile/
+
+# IDE / OS files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
