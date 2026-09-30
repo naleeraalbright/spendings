@@ -46,9 +46,9 @@ export class LoanService {
       return onSnapshot(
         q,
         { includeMetadataChanges: true },
-        (snapshot) => {
+        (snapshot: any) => {
           const items: Loan[] = [];
-          snapshot.forEach((docSnap) => {
+          snapshot.forEach((docSnap: any) => {
             const d = docSnap.data();
             items.push({
               id: docSnap.id,
@@ -58,7 +58,7 @@ export class LoanService {
               paidAmount: Number(d.paidAmount) || 0,
               createdAt: Number(d.createdAt) || Date.now(),
               updatedAt: Number(d.updatedAt) || Date.now(),
-            } as Loan);
+            } as unknown as Loan);
           });
 
           items.sort((a, b) => b.createdAt - a.createdAt);
