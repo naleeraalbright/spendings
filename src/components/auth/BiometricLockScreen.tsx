@@ -22,11 +22,11 @@ export const BiometricLockScreen: React.FC = () => {
     try {
       const success = await unlockWithBiometrics();
       if (!success) {
-        setError('Biometric verification cancelled or failed. You can use your PIN code.');
+        setError('Biometrics not registered on this device yet. Please unlock with your PIN.');
         setShowPinInput(true);
       }
     } catch {
-      setError('Biometric verification failed. Please enter your PIN.');
+      setError('Biometrics not registered on this device yet. Please unlock with your PIN.');
       setShowPinInput(true);
     } finally {
       setIsVerifying(false);
