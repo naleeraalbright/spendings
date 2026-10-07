@@ -1,5 +1,11 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, Auth } from 'firebase/auth';
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  Auth, 
+  setPersistence, 
+  browserLocalPersistence 
+} from 'firebase/auth';
 import { 
   initializeFirestore, 
   persistentLocalCache, 
@@ -48,12 +54,16 @@ if (isFirebaseConfigured) {
       db = getFirestore(app);
     }
     auth = getAuth(app as FirebaseApp);
+
+    // Explicitly ensure session persistence is saved locally across app reopens
+    setPersistence(auth, browserLocalPersistence).catch((err) => {
+      console.warn('Failed to set auth persistence:', err);
+    });
   } catch (e) {
     console.error('Failed to initialize Firebase:', e);
   }
 }
 
 export const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 export { app, auth, db };

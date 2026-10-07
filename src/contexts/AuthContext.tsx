@@ -3,12 +3,14 @@ import {
   User, 
   onAuthStateChanged, 
   signInWithPopup, 
+  signInWithRedirect,
+  getRedirectResult,
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   signOut,
   updateProfile
 } from 'firebase/auth';
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore';
 import { auth, googleProvider, db, isFirebaseConfigured } from '../lib/firebase';
 import { UserProfile, UserSettings } from '../types';
 import { BiometricService } from '../services/biometricService';
@@ -140,7 +142,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Listen to Firebase Auth state
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
       if (user) {
         setCurrentUser({
           uid: user.uid,
@@ -148,6 +150,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           displayName: user.displayName || user.email?.split('@')[0] || 'User',
           photoURL: user.photoURL,
         });
+
+        // Ensure user document exists in Firestore users collection
+        try {
+          const userDocRef = doc(db, 'users', user.uid);
+          const snap = await getDoc(userDocRef);
+          if (!snap.exists()) {
+            await setDoc(userDocRef, {
+              userId: user.uid,
+              email: user.email || '',
+              displayName: user.displayName || user.email?.split('@')[0] || 'User',
+              settings: DEFAULT_SETTINGS,
+              createdAt: Date.now(),
+            });
+          }
+        } catch (err) {
+          console.warn('Could not check/create user document in Firestore:', err);
+        }
       } else {
         setCurrentUser(null);
       }
@@ -206,8 +225,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loginWithGoogle = async () => {
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      if (result.user) {
+      let result;
+      try {
+        result = await signInWithPopup(auth, googleProvider);
+      } catch (popupErr: any) {
+        if (
+          popupErr.code === 'auth/popup-blocked' ||
+          popupErr.code === 'auth/popup-closed-by-user' ||
+          popupErr.code === 'auth/cancelled-popup-request' ||
+          /iPhone|iPad|iPod/i.test(navigator.userAgent)
+        ) {
+          await signInWithRedirect(auth, googleProvider);
+          return;
+        }
+        throw popupErr;
+      }
+
+      if (result?.user) {
+        // Immediately ensure user document exists in Firestore
+        const userDocRef = doc(db, 'users', result.user.uid);
+        const snap = await getDoc(userDocRef);
+        if (!snap.exists()) {
+          await setDoc(userDocRef, {
+            userId: result.user.uid,
+            email: result.user.email || '',
+            displayName: result.user.displayName || result.user.email?.split('@')[0] || 'Google User',
+            settings: DEFAULT_SETTINGS,
+            createdAt: Date.now(),
+          });
+        }
+
         setCurrentUser({
           uid: result.user.uid,
           email: result.user.email,
@@ -228,6 +275,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const result = await signInWithEmailAndPassword(auth, email, pass);
       if (result.user) {
+        // Ensure user document exists in Firestore
+        const userDocRef = doc(db, 'users', result.user.uid);
+        const snap = await getDoc(userDocRef);
+        if (!snap.exists()) {
+          await setDoc(userDocRef, {
+            userId: result.user.uid,
+            email: result.user.email || '',
+            displayName: result.user.displayName || email.split('@')[0],
+            settings: DEFAULT_SETTINGS,
+            createdAt: Date.now(),
+          });
+        }
+
         setCurrentUser({
           uid: result.user.uid,
           email: result.user.email,
@@ -248,6 +308,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (name) {
           await updateProfile(result.user, { displayName: name });
         }
+
+        // Immediately create user document in Firestore users collection
+        const userDocRef = doc(db, 'users', result.user.uid);
+        await setDoc(userDocRef, {
+          userId: result.user.uid,
+          email: result.user.email || '',
+          displayName: name || email.split('@')[0],
+          settings: DEFAULT_SETTINGS,
+          createdAt: Date.now(),
+        });
+
         setCurrentUser({
           uid: result.user.uid,
           email: result.user.email,
