@@ -11,7 +11,8 @@ import {
   CalendarDays,
   Clock,
   Archive,
-  Filter
+  Filter,
+  Edit2
 } from 'lucide-react';
 import { Transaction, MonthArchive } from '../../types';
 import { formatCurrency, formatDate, formatDateTime } from '../../utils/formatters';
@@ -21,6 +22,7 @@ interface TransactionTableProps {
   archives?: MonthArchive[];
   currency: string;
   onDelete: (id: string) => Promise<void>;
+  onEdit?: (transaction: Transaction) => void;
   onAddIncome: () => void;
   onAddExpense: () => void;
   onOpenNewMonth: () => void;
@@ -31,6 +33,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
   archives = [],
   currency,
   onDelete,
+  onEdit,
   onAddIncome,
   onAddExpense,
   onOpenNewMonth,
@@ -381,7 +384,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                     </div>
                   </div>
 
-                  {/* Right: Big Bold Amount + Delete Action */}
+                  {/* Right: Big Bold Amount + Actions */}
                   <div className="flex flex-col items-end space-y-2 flex-shrink-0">
                     <span
                       className={`text-base font-black font-mono tracking-tight ${
@@ -392,13 +395,24 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                       {formatCurrency(tx.amount, currency)}
                     </span>
 
-                    <button
-                      onClick={() => onDelete(tx.id)}
-                      className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition"
-                      title="Delete transaction"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center space-x-1">
+                      {onEdit && (
+                        <button
+                          onClick={() => onEdit(tx)}
+                          className="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-slate-800 rounded-lg transition"
+                          title="Edit transaction"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => onDelete(tx.id)}
+                        className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition"
+                        title="Delete transaction"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -531,13 +545,24 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
 
                     {/* Action */}
                     <td className="py-3.5 px-6 text-center whitespace-nowrap">
-                      <button
-                        onClick={() => onDelete(tx.id)}
-                        className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
-                        title="Delete record"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center justify-center space-x-1">
+                        {onEdit && (
+                          <button
+                            onClick={() => onEdit(tx)}
+                            className="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition"
+                            title="Edit record"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => onDelete(tx.id)}
+                          className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
+                          title="Delete record"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

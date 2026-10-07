@@ -33,6 +33,7 @@ export const AppContent: React.FC = () => {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
   const [txModalType, setTxModalType] = useState<TransactionType>('expense');
+  const [txToEdit, setTxToEdit] = useState<Transaction | null>(null);
   const [isLoanModalOpen, setIsLoanModalOpen] = useState(false);
 
   // Subscribe to real-time transactions, loans & month archives for the current authenticated user
@@ -117,13 +118,24 @@ export const AppContent: React.FC = () => {
 
   // Handler functions
   const handleOpenAddTx = (type: TransactionType) => {
+    setTxToEdit(null);
     setTxModalType(type);
+    setIsTxModalOpen(true);
+  };
+
+  const handleOpenEditTx = (tx: Transaction) => {
+    setTxToEdit(tx);
+    setTxModalType(tx.type);
     setIsTxModalOpen(true);
   };
 
   const handleSaveTransaction = async (data: any) => {
     if (!currentUser) return;
-    await TransactionService.addTransaction(currentUser.uid, data);
+    if (txToEdit) {
+      await TransactionService.updateTransaction(currentUser.uid, txToEdit.id, data);
+    } else {
+      await TransactionService.addTransaction(currentUser.uid, data);
+    }
   };
 
   const handleDeleteTransaction = async (id: string) => {
@@ -243,6 +255,7 @@ export const AppContent: React.FC = () => {
                     archives={archives}
                     currency={userSettings.currency}
                     onDelete={handleDeleteTransaction}
+                    onEdit={handleOpenEditTx}
                     onAddIncome={() => handleOpenAddTx('income')}
                     onAddExpense={() => handleOpenAddTx('expense')}
                     onOpenNewMonth={() => setIsSettingsModalOpen(true)}
@@ -294,6 +307,7 @@ export const AppContent: React.FC = () => {
                 archives={archives}
                 currency={userSettings.currency}
                 onDelete={handleDeleteTransaction}
+                onEdit={handleOpenEditTx}
                 onAddIncome={() => handleOpenAddTx('income')}
                 onAddExpense={() => handleOpenAddTx('expense')}
                 onOpenNewMonth={() => setIsSettingsModalOpen(true)}
@@ -343,8 +357,12 @@ export const AppContent: React.FC = () => {
       <AddTransactionModal
         isOpen={isTxModalOpen}
         initialType={txModalType}
+        transactionToEdit={txToEdit}
         currency={userSettings.currency}
-        onClose={() => setIsTxModalOpen(false)}
+        onClose={() => {
+          setIsTxModalOpen(false);
+          setTxToEdit(null);
+        }}
         onSubmit={handleSaveTransaction}
       />
 

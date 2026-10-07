@@ -9,11 +9,12 @@ import {
   Calendar, 
   FileText
 } from 'lucide-react';
-import { TransactionType } from '../../types';
+import { Transaction, TransactionType } from '../../types';
 
 interface AddTransactionModalProps {
   isOpen: boolean;
   initialType?: TransactionType;
+  transactionToEdit?: Transaction | null;
   currency: string;
   onClose: () => void;
   onSubmit: (data: {
@@ -52,6 +53,7 @@ const INCOME_CATEGORIES = [
 export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   isOpen,
   initialType = 'expense',
+  transactionToEdit = null,
   currency,
   onClose,
   onSubmit,
@@ -75,18 +77,35 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      setType(initialType);
-      setCategory(initialType === 'expense' ? expenseCategories[0] : INCOME_CATEGORIES[0]);
-      setTitle('');
-      setAmount('');
-      setQuantity(1);
-      setUnitPrice('');
-      setUseUnitCalculation(false);
-      setDate(new Date().toISOString().split('T')[0]);
-      setNotes('');
+      if (transactionToEdit) {
+        setType(transactionToEdit.type);
+        setCategory(transactionToEdit.category || (transactionToEdit.type === 'expense' ? expenseCategories[0] : INCOME_CATEGORIES[0]));
+        setTitle(transactionToEdit.title || '');
+        setAmount(transactionToEdit.amount !== undefined ? String(transactionToEdit.amount) : '');
+        setQuantity(transactionToEdit.quantity || 1);
+        if (transactionToEdit.unitPrice) {
+          setUnitPrice(String(transactionToEdit.unitPrice));
+          setUseUnitCalculation(true);
+        } else {
+          setUnitPrice('');
+          setUseUnitCalculation(false);
+        }
+        setDate(transactionToEdit.date || new Date().toISOString().split('T')[0]);
+        setNotes(transactionToEdit.notes || '');
+      } else {
+        setType(initialType);
+        setCategory(initialType === 'expense' ? expenseCategories[0] : INCOME_CATEGORIES[0]);
+        setTitle('');
+        setAmount('');
+        setQuantity(1);
+        setUnitPrice('');
+        setUseUnitCalculation(false);
+        setDate(new Date().toISOString().split('T')[0]);
+        setNotes('');
+      }
       setError(null);
     }
-  }, [isOpen, initialType, expenseCategories]);
+  }, [isOpen, initialType, transactionToEdit, expenseCategories]);
 
   // When type changes, switch category list default
   const handleTypeChange = (newType: TransactionType) => {
@@ -171,10 +190,14 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
             )}
             <div>
               <h3 className="text-lg font-bold text-white">
-                {type === 'expense' ? 'Add Expenditure' : 'Add Income'}
+                {transactionToEdit
+                  ? `Edit ${type === 'expense' ? 'Expenditure' : 'Income'}`
+                  : (type === 'expense' ? 'Add Expenditure' : 'Add Income')}
               </h3>
               <p className="text-xs text-slate-400">
-                {type === 'expense' ? 'Track what you bought with quantity' : 'Record your incoming cash or earnings'}
+                {transactionToEdit
+                  ? 'Update transaction details, quantity, category, or amount'
+                  : (type === 'expense' ? 'Track what you bought with quantity' : 'Record your incoming cash or earnings')}
               </p>
             </div>
           </div>
@@ -390,7 +413,11 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
               ) : (
                 <>
                   {type === 'expense' ? <MinusCircle className="w-4 h-4" /> : <PlusCircle className="w-4 h-4" />}
-                  <span>Save {type === 'expense' ? 'Expenditure' : 'Income'}</span>
+                  <span>
+                    {transactionToEdit
+                      ? `Update ${type === 'expense' ? 'Expenditure' : 'Income'}`
+                      : `Save ${type === 'expense' ? 'Expenditure' : 'Income'}`}
+                  </span>
                 </>
               )}
             </button>
